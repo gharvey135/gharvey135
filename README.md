@@ -4,7 +4,7 @@ Solutions Architect and Sales Engineer, Austin TX. Seven years shipping enterpri
 
 Previously: AI Technical Lead and North America Solutions Architect at Productboard, Technical Account Manager for 150+ enterprise API accounts at Perigon, Implementation Lead at Melio Payments, Product Operations at Sentieo (AlphaSense).
 
-Portfolio: [georgia-sa-portfolio.vercel.app](https://georgia-sa-portfolio.vercel.app)  ·  Email: gharvey135@gmail.com
+Portfolio: [georgia-sa-portfolio.vercel.app](https://georgia-sa-portfolio.vercel.app)  ·  [LinkedIn](https://www.linkedin.com/in/georgia-harvey/)  ·  Email: gharvey135@gmail.com
 
 ## Start here
 
