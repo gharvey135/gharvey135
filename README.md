@@ -1,6 +1,6 @@
 # Georgia Harvey
 
-Solutions architect, sales engineer, enterprise integrations. Eight years embedding myself in the workflow, end to end: discovery, architecture, build, launch, and the handoff that makes them stick. I also co-operated two venues, which is why several repos here reconcile reservations, POS checks, and HR paperwork instead of todo lists.
+Solutions architect, FDE, solutions engineer, enterprise integrations. Eight years embedding myself in the workflow, end to end: discovery, architecture, build, launch, and the handoff that makes them stick. I also co-operated two venues, which is why several repos here reconcile reservations, POS checks, and HR paperwork instead of todo lists.
 
 Portfolio: [georgia-sa-portfolio.vercel.app](https://georgia-sa-portfolio.vercel.app)  ·  [LinkedIn](https://www.linkedin.com/in/georgia-harvey/)  ·  Email: gharvey135@gmail.com
 
