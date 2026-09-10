@@ -1,6 +1,6 @@
 # Georgia Harvey
 
-Solutions Architect and Sales Engineer, Austin TX. Seven years shipping enterprise integrations and AI workflows end to end: discovery, architecture, build, launch, and the handoff that makes them stick. I also co-own two Austin venues, which is why several repos here reconcile reservations, POS checks, and HR paperwork instead of todo lists.
+Solutions architect, sales engineer, forward deployed engineer. Eight years shipping enterprise integrations and AI workflows end to end: discovery, architecture, build, launch, and the handoff that makes them stick. I also co-own two Austin venues, which is why several repos here reconcile reservations, POS checks, and HR paperwork instead of todo lists.
 
 Previously: AI Technical Lead and North America Solutions Architect at Productboard, Technical Account Manager for 150+ enterprise API accounts at Perigon, Implementation Lead at Melio Payments, Product Operations at Sentieo (AlphaSense).
 
