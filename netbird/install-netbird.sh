@@ -39,10 +39,20 @@ fail() { red "  FAIL  $*"; FAILED=1; }
 
 FAILED=0
 
+# /dev/tty may exist and be readable by mode bits yet fail to open when the
+# process has no controlling terminal, so test the open itself.
+has_tty() { { : </dev/tty; } 2>/dev/null; }
+
+# Ask a yes/no question on the controlling terminal. Without one (no `ssh -t`,
+# a pipe, cron) the answer is no rather than an abort.
 confirm() {
   [[ "$ASSUME_YES" == "true" ]] && return 0
-  local reply
-  read -r -p "$1 [y/N] " reply </dev/tty
+  local reply=""
+  if ! has_tty; then
+    warn "no terminal to ask \"$1\" — assuming no (use 'ssh -t', or set ASSUME_YES=true)"
+    return 1
+  fi
+  read -r -p "$1 [y/N] " reply </dev/tty || return 1
   [[ "$reply" =~ ^[Yy]$ ]]
 }
 
@@ -56,10 +66,18 @@ require_root() {
 # ---------------------------------------------------------------- inputs ----
 
 read_inputs() {
-  if [[ -z "${NETBIRD_DOMAIN:-}" ]]; then
+  NETBIRD_DOMAIN="${NETBIRD_DOMAIN:-}"
+  NETBIRD_LETSENCRYPT_EMAIL="${NETBIRD_LETSENCRYPT_EMAIL:-}"
+
+  if [[ -z "$NETBIRD_DOMAIN" || -z "$NETBIRD_LETSENCRYPT_EMAIL" ]] && ! has_tty; then
+    red "NETBIRD_DOMAIN and NETBIRD_LETSENCRYPT_EMAIL must be set when there is no terminal to prompt on."
+    red "Pass them as environment variables, or run over 'ssh -t'."
+    exit 1
+  fi
+  if [[ -z "$NETBIRD_DOMAIN" ]]; then
     read -r -p "Domain for this NetBird server (e.g. netbird.example.com): " NETBIRD_DOMAIN </dev/tty
   fi
-  if [[ -z "${NETBIRD_LETSENCRYPT_EMAIL:-}" ]]; then
+  if [[ -z "$NETBIRD_LETSENCRYPT_EMAIL" ]]; then
     read -r -p "Email for Let's Encrypt certificate notices: " NETBIRD_LETSENCRYPT_EMAIL </dev/tty
   fi
 
@@ -127,15 +145,37 @@ check_dns() {
   fi
 }
 
+# Emit the processes listening on a given proto/port, or nothing.
+port_listeners() {
+  local proto="$1" port="$2"
+  if command -v ss >/dev/null 2>&1; then
+    ss -lntup 2>/dev/null \
+      | awk -v p=":$port\$" -v pr="$proto" '$1==pr && $5 ~ p {print $NF}' \
+      | sort -u | tr '\n' ' '
+  elif command -v netstat >/dev/null 2>&1; then
+    # netstat puts the local address in $4 and tags v6 rows tcp6/udp6.
+    netstat -lntup 2>/dev/null \
+      | awk -v p=":$port\$" -v pr="$proto" '$1 ~ "^"pr && $4 ~ p {print $NF}' \
+      | sort -u | tr '\n' ' '
+  fi
+}
+
 check_ports() {
   bold "Ports"
-  if ! command -v ss >/dev/null 2>&1; then
-    warn "ss not found (install iproute2); skipping listener check"
+  if ! command -v ss >/dev/null 2>&1 && ! command -v netstat >/dev/null 2>&1; then
+    warn "neither ss nor netstat is installed, so ports cannot be checked"
+    if confirm "  Install iproute2 so the port check can run?"; then
+      pkg_install iproute2 >/dev/null 2>&1 || pkg_install iproute >/dev/null 2>&1 || true
+    fi
+  fi
+
+  if ! command -v ss >/dev/null 2>&1 && ! command -v netstat >/dev/null 2>&1; then
+    warn "skipping the listener check — verify 80/tcp, 443/tcp and 3478/udp are free yourself"
   else
     local listeners
     for spec in "tcp 80" "tcp 443" "udp 3478"; do
       set -- $spec
-      listeners="$(ss -lntup 2>/dev/null | awk -v p=":$2\$" -v pr="$1" '$1==pr && $5 ~ p {print $NF}' | sort -u | tr '\n' ' ')"
+      listeners="$(port_listeners "$1" "$2")"
       if [[ -n "$listeners" ]]; then
         fail "$1/$2 is already in use by: $listeners — stop it or use an external reverse proxy (see README)"
       else
@@ -186,7 +226,16 @@ check_deps() {
   elif command -v docker-compose >/dev/null 2>&1; then
     ok "docker-compose (v1) present"
   else
-    fail "docker compose plugin missing — https://docs.docker.com/compose/install/"
+    warn "the docker compose plugin is missing"
+    if confirm "  Try to install docker-compose-plugin now?"; then
+      if pkg_install docker-compose-plugin >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+        ok "docker compose installed"
+      else
+        fail "could not install it automatically (your Docker likely came from the distro repo, which does not carry the plugin) — https://docs.docker.com/compose/install/"
+      fi
+    else
+      fail "docker compose is required — https://docs.docker.com/compose/install/"
+    fi
   fi
 
   for bin in jq openssl curl; do
