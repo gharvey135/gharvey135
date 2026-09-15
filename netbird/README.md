@@ -80,3 +80,11 @@ sudo NETBIRD_REVERSE_PROXY_TYPE=2 NETBIRD_DOMAIN=... NETBIRD_LETSENCRYPT_EMAIL=.
 The upstream installer prints the reverse-proxy config to paste in once it's done.
 
 [quickstart]: https://docs.netbird.io/selfhosted/selfhosted-quickstart
+
+## Escape hatches
+
+| Variable | Effect |
+|----------|--------|
+| `SKIP_DNS_CHECK=true` | Skip the A-record match — for a host behind a load balancer that owns the public address |
+| `NETBIRD_WORKDIR=/srv/netbird` | Install somewhere other than `/opt/netbird` |
+| `ASSUME_YES=true` | Answer every prompt yes (unattended) |

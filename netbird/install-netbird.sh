@@ -26,6 +26,7 @@ set -euo pipefail
 INSTALLER_URL="https://github.com/netbirdio/netbird/releases/latest/download/getting-started.sh"
 WORKDIR="${NETBIRD_WORKDIR:-/opt/netbird}"
 ASSUME_YES="${ASSUME_YES:-false}"
+SKIP_DNS_CHECK="${SKIP_DNS_CHECK:-false}"
 
 red()  { printf '\033[31m%s\033[0m\n' "$*"; }
 grn()  { printf '\033[32m%s\033[0m\n' "$*"; }
@@ -100,6 +101,10 @@ resolve_a() {
 
 check_dns() {
   bold "DNS"
+  if [[ "$SKIP_DNS_CHECK" == "true" ]]; then
+    warn "SKIP_DNS_CHECK=true — not verifying that $NETBIRD_DOMAIN points here"
+    return
+  fi
   local ips myip
   ips="$(resolve_a "$NETBIRD_DOMAIN")"
   myip="$(public_ip || true)"
@@ -117,6 +122,8 @@ check_dns() {
     ok "A record matches this server's public IP ($myip)"
   else
     fail "A record does not point at this server (this host is $myip). Fix DNS and wait for TTL."
+    echo "        If this host sits behind a load balancer or proxy that owns the"
+    echo "        public address, re-run with SKIP_DNS_CHECK=true."
   fi
 }
 
@@ -195,8 +202,12 @@ check_deps() {
     fi
   done
 
-  if command -v systemctl >/dev/null 2>&1 && ! systemctl is-active --quiet docker; then
-    fail "the docker daemon is not running (systemctl start docker)"
+  if command -v docker >/dev/null 2>&1; then
+    if docker info >/dev/null 2>&1; then
+      ok "docker daemon is reachable"
+    else
+      fail "the docker daemon is not reachable (try: sudo systemctl start docker)"
+    fi
   fi
 }
 
